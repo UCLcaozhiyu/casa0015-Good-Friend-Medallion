@@ -13,7 +13,7 @@ import 'package:geolocator/geolocator.dart';
 
 void main() {
   testWidgets('Initial UI elements render correctly', (WidgetTester tester) async {
-    await tester.pumpWidget(MyApp());
+    await tester.pumpWidget(const MyApp());
 
     // 测试位置文字是否存在
     expect(find.text('📍 Your Location:'), findsOneWidget);
