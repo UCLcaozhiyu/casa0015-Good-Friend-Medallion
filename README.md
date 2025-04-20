@@ -23,6 +23,7 @@ good friend medallion
 
 ## **🛠️ How It Works**
 ### **1️⃣ Discovery via Bluetooth (BLE)**
+- The mobile phone positioning system provides coordinates.
 - One device **advertises** itself via BLE.
 - Another device **scans** and finds the target.
 - BLE only sends **basic info** (WiFi SSID, unique ID).
