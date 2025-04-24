@@ -1,13 +1,22 @@
-// main.dart（连接后图标动态变化 + 可调节阈值 + 信号强度仪表 + 重置按钮 + 实时更新优化）
+// main.dart（Web 适配版）
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'compass_widget.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
+    runApp(const MyApp());
+  } catch (e) {
+    print('Error initializing app: $e');
+    runApp(const MyApp());
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -41,6 +50,11 @@ class _HomePageState extends State<HomePage> {
   StreamSubscription<List<ScanResult>>? _bleScanSubscription;
   bool enableRssiHaptic = false;
   Timer? _rssiUpdateTimer;
+  double _distance = 0;
+  double _bearing = 0;
+  bool _isBluetoothMode = false;
+  Position? _currentPosition;
+  Position? _targetPosition;
 
   // 可调阈值
   double closeThreshold = -60;
@@ -58,8 +72,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    requestPermissions();
-    startLocationStream();
+    _initializeApp();
   }
 
   @override
@@ -67,12 +80,60 @@ class _HomePageState extends State<HomePage> {
     _positionStream?.cancel();
     _bleScanSubscription?.cancel();
     _rssiUpdateTimer?.cancel();
+    if (!kIsWeb) {
     FlutterBluePlus.stopScan();
     connectedDevice?.disconnect();
+    }
     super.dispose();
   }
 
+  Future<void> _initializeApp() async {
+    try {
+      print('Starting app initialization...');
+      await requestPermissions();
+      await startLocationStream();
+      print('App initialization completed');
+    } catch (e) {
+      print('Error during app initialization: $e');
+    }
+  }
+
   Future<void> requestPermissions() async {
+    if (kIsWeb) {
+      // Web 平台只需要位置权限
+      Map<Permission, PermissionStatus> statuses = await [
+        Permission.location,
+      ].request();
+      
+      bool denied = statuses.values.any((status) =>
+          status.isDenied || status.isPermanentlyDenied);
+
+      if (denied) {
+        setState(() {
+          location = "❌ 权限不足，请在设置中手动开启";
+        });
+
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text("权限被拒绝"),
+              content: const Text("请允许位置访问权限，否则功能无法使用。"),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    openAppSettings();
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text("打开设置"),
+                ),
+              ],
+            ),
+          );
+        }
+      }
+    } else {
+      // 移动平台需要位置和蓝牙权限
     Map<Permission, PermissionStatus> statuses = await [
       Permission.location,
       Permission.bluetooth,
@@ -107,39 +168,87 @@ class _HomePageState extends State<HomePage> {
         );
       }
     }
+    }
   }
 
-  void startLocationStream() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      setState(() {
-        location = "⚠️ Location service disabled";
-      });
-      return;
-    }
+  // 计算两个位置之间的距离（米）
+  double calculateDistance(Position pos1, Position pos2) {
+    return Geolocator.distanceBetween(
+      pos1.latitude,
+      pos1.longitude,
+      pos2.latitude,
+      pos2.longitude,
+    );
+  }
 
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-    }
-    if (permission == LocationPermission.deniedForever ||
-        permission == LocationPermission.denied) {
-      setState(() {
-        location = "❌ Location permission denied";
-      });
-      return;
-    }
+  // 计算方位角（度）
+  double calculateBearing(Position pos1, Position pos2) {
+    double lat1 = pos1.latitude * math.pi / 180;
+    double lon1 = pos1.longitude * math.pi / 180;
+    double lat2 = pos2.latitude * math.pi / 180;
+    double lon2 = pos2.longitude * math.pi / 180;
 
-    _positionStream = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
-    ).listen((Position position) {
-      setState(() {
-        location = "Lat: ${position.latitude}, Lon: ${position.longitude}";
+    double y = math.sin(lon2 - lon1) * math.cos(lat2);
+    double x = math.cos(lat1) * math.sin(lat2) -
+        math.sin(lat1) * math.cos(lat2) * math.cos(lon2 - lon1);
+    double bearing = math.atan2(y, x) * 180 / math.pi;
+    return (bearing + 360) % 360;
+  }
+
+  Future<void> startLocationStream() async {
+    try {
+      print('Starting location stream...');
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        setState(() {
+          location = "⚠️ Location service disabled";
+        });
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.deniedForever ||
+          permission == LocationPermission.denied) {
+        setState(() {
+          location = "❌ Location permission denied";
+        });
+        return;
+      }
+
+      _positionStream = Geolocator.getPositionStream(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+      ).listen((Position position) {
+        setState(() {
+          _currentPosition = position;
+          location = "Lat: ${position.latitude}, Lon: ${position.longitude}";
+          
+          // 如果有目标位置，计算距离和方位
+          if (_targetPosition != null) {
+            _distance = calculateDistance(position, _targetPosition!);
+            _bearing = calculateBearing(position, _targetPosition!);
+          }
+        });
       });
-    });
+      print('Location stream started successfully');
+    } catch (e) {
+      print('Error starting location stream: $e');
+      setState(() {
+        location = "❌ Error: $e";
+      });
+    }
   }
 
   void startBleScan() {
+    if (kIsWeb) {
+      setState(() {
+        bleStatus = "⚠️ 蓝牙功能在 Web 平台不可用";
+      });
+      return;
+    }
+
     FlutterBluePlus.stopScan();
     foundDevices.clear();
     setState(() {
@@ -162,6 +271,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   void connectToDevice(ScanResult r) async {
+    if (kIsWeb) return;
+
     await FlutterBluePlus.stopScan();
     setState(() {
       bleStatus = "🔗 Connecting to ${r.device.name}";
@@ -173,6 +284,13 @@ class _HomePageState extends State<HomePage> {
       connectedDeviceId = r.device.remoteId.str;
       enableRssiHaptic = true;
       startConnectedRssiListener();
+
+      // 发送当前位置给连接的设备
+      if (_currentPosition != null) {
+        // 这里可以添加通过蓝牙发送位置信息的代码
+        // 实际实现需要定义蓝牙服务和特征值
+        print('Sending location to device: ${_currentPosition!.latitude}, ${_currentPosition!.longitude}');
+      }
 
       setState(() {
         bleStatus = "✅ Connected to ${r.device.name}";
@@ -188,6 +306,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   void startConnectedRssiListener() {
+    if (kIsWeb) return;
+
     _bleScanSubscription?.cancel();
     _rssiUpdateTimer?.cancel();
 
@@ -213,6 +333,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget buildRssiMeter() {
+    if (kIsWeb) {
+      return const Text("⚠️ 蓝牙功能在 Web 平台不可用");
+    }
+
     if (rssiValue == null) return const Text("🔍 No device nearby.");
 
     double normalized = ((rssiValue! - rssiMin) / (rssiMax - rssiMin)).clamp(0.0, 1.0);
@@ -243,6 +367,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget buildDeviceList() {
+    if (kIsWeb) {
+      return const Text("⚠️ 蓝牙功能在 Web 平台不可用");
+    }
+
     if (foundDevices.isEmpty) return const Text("🔍 No BLE devices found.");
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -260,6 +388,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget buildThresholdSlider() {
+    if (kIsWeb) {
+      return const Text("⚠️ 蓝牙功能在 Web 平台不可用");
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -310,10 +442,29 @@ class _HomePageState extends State<HomePage> {
               const Text("📍 Your Location:"),
               Text(location),
               const SizedBox(height: 30),
+              if (_targetPosition != null) ...[
+                Text("🎯 Target Location:"),
+                Text("Lat: ${_targetPosition!.latitude}, Lon: ${_targetPosition!.longitude}"),
+                Text("📏 Distance: ${_distance.toStringAsFixed(2)} meters"),
+                Text("🧭 Bearing: ${_bearing.toStringAsFixed(1)}°"),
+                const SizedBox(height: 30),
+              ],
+              if (!kIsWeb) ...[
               const Text("📡 BLE Status:"),
               Text(bleStatus),
               const SizedBox(height: 30),
-              buildRssiMeter(),
+              ],
+              // 显示罗盘
+              Center(
+                child: CompassWidget(
+                  bearing: _bearing,
+                  distance: _distance,
+                  isBluetoothMode: _isBluetoothMode,
+                ),
+              ),
+              const SizedBox(height: 30),
+              if (!kIsWeb) ...[
+              if (!_isBluetoothMode) buildRssiMeter(),
               const SizedBox(height: 30),
               buildThresholdSlider(),
               const SizedBox(height: 30),
@@ -323,6 +474,12 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 30),
               buildDeviceList(),
+              ] else ...[
+                const Text(
+                  "⚠️ 注意：这是一个蓝牙应用，在 Web 平台上只能使用位置功能。",
+                  style: TextStyle(color: Colors.orange),
+                ),
+              ],
             ],
           ),
         ),
