@@ -1,2 +1,0 @@
-D:/FlutterApps/casa0015-Good-Friend-Medallion/android/app/.cxx/Debug/5h543a6m/x86/CMakeFiles/edit_cache.dir
-D:/FlutterApps/casa0015-Good-Friend-Medallion/android/app/.cxx/Debug/5h543a6m/x86/CMakeFiles/rebuild_cache.dir

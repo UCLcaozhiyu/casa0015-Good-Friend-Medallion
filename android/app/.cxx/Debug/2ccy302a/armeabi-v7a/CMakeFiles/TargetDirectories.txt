@@ -1,2 +1,0 @@
-D:/FlutterApps/casa0015test/android/app/.cxx/Debug/2ccy302a/armeabi-v7a/CMakeFiles/edit_cache.dir
-D:/FlutterApps/casa0015test/android/app/.cxx/Debug/2ccy302a/armeabi-v7a/CMakeFiles/rebuild_cache.dir
