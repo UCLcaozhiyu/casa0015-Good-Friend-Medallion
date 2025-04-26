@@ -8,20 +8,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:the_good_friend_medallion/main.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:good_friend_medallion/main.dart';
 
 void main() {
-  testWidgets('Initial UI elements render correctly', (WidgetTester tester) async {
+  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+    // Build our app and trigger a frame.
     await tester.pumpWidget(const MyApp());
 
-    // 测试位置文字是否存在
-    expect(find.text('📍 Your Location:'), findsOneWidget);
+    // Verify that our counter starts at 0.
+    expect(find.text('0'), findsOneWidget);
+    expect(find.text('1'), findsNothing);
 
-    // 测试 BLE 状态初始显示
-    expect(find.text('Not Scanning'), findsOneWidget);
+    // Tap the '+' icon and trigger a frame.
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pump();
 
-    // 测试按钮是否存在
-    expect(find.widgetWithText(ElevatedButton, '🔍 Scan for Friend'), findsOneWidget);
+    // Verify that our counter has incremented.
+    expect(find.text('0'), findsNothing);
+    expect(find.text('1'), findsOneWidget);
   });
 }
