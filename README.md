@@ -60,7 +60,7 @@ Good Friend Medallion is an innovative mobile application that combines Bluetoot
 ## The compass points to the friend screen
 ![Location Tracking](landingpage/assets/gfm3.0/d9ea1f52dcced32691b50368b3a048a.jpg)
 ## Bluetooth device detection function page
-![Location Tracking](landingpage/assets/gfm3.0/c0e335e0f7e48911e2b8f746b3b73bf.jpg)
+![Location Tracking](landingpage/assets/gfm3.0/b0ae231ef1bb6dbf41cb21c37790aa5.jpg)
 
 
 ## 🛠️ How It Works
