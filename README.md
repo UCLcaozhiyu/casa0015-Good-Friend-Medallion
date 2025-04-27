@@ -156,6 +156,108 @@ For questions or contributions, please:
 - Email: [Your Email]
 - Visit our [Discussion Board](https://github.com/UCLcaozhiyu/casa0015-Good-Friend-Medallion/discussions)
 
+## 📓 Development Log
+
+### Latest Update (April 27, 2025)
+
+#### 🔧 BLE Device Name Display Fix
+- **Issue**: Some devices were showing as "Unknown Device"
+- **Solution**: Implemented improved device filtering and name resolution
+```dart
+_foundDevices = results.where((r) => 
+  r.device.platformName.isNotEmpty || 
+  r.device.localName.isNotEmpty || 
+  r.advertisementData.advName.isNotEmpty
+).toList();
+```
+- **Improvements**:
+  - Better device name display
+  - MAC address fallback for identification
+  - Cleaner UI without debug information
+
+### Development Timeline
+
+#### 📅 Initial Setup
+- Initialized Flutter project
+- Configured core dependencies:
+  - flutter_blue_plus: ^1.35.3
+  - geolocator: ^10.0.1
+  - vibration: ^1.7.4
+  - permission_handler: ^11.0.1
+
+#### 📅 Core Features Implementation
+1. **Location Services**
+   - GPS coordinates tracking
+   - Permission handling
+   - UI display integration
+
+2. **BLE Integration**
+   - Device scanning
+   - Signal strength monitoring
+   - Name filtering implementation
+
+3. **User Feedback**
+   - Vibration patterns
+   - Visual indicators
+   - Distance calculation
+
+#### 📅 Technical Challenges Resolved
+
+1. **Build System Issues**
+   - Fixed JDK configuration
+   - Resolved NDK setup problems
+   - Optimized Gradle build process
+
+2. **BLE Optimization**
+   - Implemented RSSI smoothing
+   - Added dynamic feedback adjustment
+   - Enhanced UI responsiveness
+
+3. **GPS Integration**
+   - Added friend discovery logic
+   - Implemented distance calculation
+   - Optimized battery usage
+
+### 🔄 Recent Improvements
+
+1. **BLE RSSI Smoothing**
+   - Continuous sampling implementation
+   - Sliding average calculation
+   - Stable distance feedback
+
+2. **UI Enhancements**
+   - Added progress indicators
+   - Improved status icons
+   - Enhanced visual feedback
+
+3. **System Architecture**
+```
+[User Interface (UI)]
+    ↓
+[Location Module (GPS)] + [Bluetooth Module (BLE)]
+    ↓
+[Backend Server (Friend Location Database)]
+    ↓
+[Feedback Mechanism (Vibration / Icons / Sounds)]
+```
+
+### 📈 Upcoming Features
+
+1. **Enhanced Friend Discovery**
+   - GPS position upload module
+   - Friend list management
+   - Nearby friend notifications
+
+2. **Advanced BLE Features**
+   - Identity broadcasting
+   - Selective device scanning
+   - Connection state persistence
+
+3. **UI/UX Improvements**
+   - Animated direction indicators
+   - Custom vibration patterns
+   - Power efficiency optimizations
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
