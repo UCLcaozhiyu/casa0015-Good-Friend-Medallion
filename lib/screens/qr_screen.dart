@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../services/permission_service.dart';
 import '../services/user_service.dart';
+import '../services/bluetooth_service.dart';
 import 'compass_screen.dart';
 import 'bluetooth_screen.dart';
 import 'dart:convert';
@@ -28,6 +29,8 @@ class _QRScreenState extends State<QRScreen> {
     super.initState();
     _checkCameraPermission();
     _loadUserData();
+    // Start Bluetooth monitoring when the screen is opened
+    BluetoothManager.startMonitoring();
   }
 
   Future<void> _loadUserData() async {
@@ -62,12 +65,23 @@ class _QRScreenState extends State<QRScreen> {
     try {
       final matchData = json.decode(scannedData) as Map<String, dynamic>;
       await UserService.addMatch(matchData);
+      
+      // Save the matched device for automatic Bluetooth connection
+      if (matchData.containsKey('deviceId') && matchData.containsKey('deviceName')) {
+        await BluetoothManager.addMatchedDevice(
+          matchData['deviceId'],
+          matchData['deviceName']
+        );
+      }
+      
       await _loadUserData();
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('New friend added!')),
+          const SnackBar(content: Text('New friend added! Starting Bluetooth monitoring...')),
         );
+        // Start monitoring for the matched device
+        await BluetoothManager.startMonitoring();
       }
     } catch (e) {
       if (mounted) {
@@ -120,13 +134,28 @@ class _QRScreenState extends State<QRScreen> {
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 10),
-                  QrImageView(
-                    data: json.encode({
-                      'id': _userId,
-                      'timestamp': DateTime.now().toIso8601String(),
-                    }),
-                    version: QrVersions.auto,
-                    size: 200.0,
+                  FutureBuilder(
+                    future: Future.wait([
+                      BluetoothManager.getDeviceId(),
+                      BluetoothManager.getDeviceName()
+                    ]),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        final deviceId = snapshot.data![0];
+                        final deviceName = snapshot.data![1];
+                        return QrImageView(
+                          data: json.encode({
+                            'id': _userId,
+                            'timestamp': DateTime.now().toIso8601String(),
+                            'deviceId': deviceId,
+                            'deviceName': deviceName
+                          }),
+                          version: QrVersions.auto,
+                          size: 200.0,
+                        );
+                      }
+                      return const CircularProgressIndicator();
+                    },
                   ),
                 ],
               ),
@@ -186,6 +215,8 @@ class _QRScreenState extends State<QRScreen> {
   @override
   void dispose() {
     _scannerController.dispose();
+    // Stop monitoring when the screen is closed
+    BluetoothManager.stopMonitoring();
     super.dispose();
   }
 } 

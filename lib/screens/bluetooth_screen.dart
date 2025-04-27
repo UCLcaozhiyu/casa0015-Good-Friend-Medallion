@@ -4,33 +4,43 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/services.dart';
 import '../services/permission_service.dart';
 import '../services/bluetooth_service.dart';
+import '../services/user_service.dart';
+import 'qr_screen.dart';
 import 'dart:async';
 
 class BluetoothScreen extends StatefulWidget {
-  const BluetoothScreen({Key? key}) : super(key: key);
+  const BluetoothScreen({super.key});
 
   @override
-  _BluetoothScreenState createState() => _BluetoothScreenState();
+  State<BluetoothScreen> createState() => _BluetoothScreenState();
 }
 
 class _BluetoothScreenState extends State<BluetoothScreen> {
+  final BluetoothDeviceService _bluetoothService = BluetoothDeviceService();
+  final UserService _userService = UserService();
+  List<ScanResult> _foundDevices = [];
   bool _isScanning = false;
-  Map<String, BluetoothDevice> _devices = {};
+  String _scanStatus = "Not scanning";
+  String _connectionStatus = "Not connected";
+  String? _connectedDeviceName;
+  double? _rssiValue;
+  Timer? _scanTimer;
+  Timer? _rssiUpdateTimer;
+  bool _showRssi = false;
   bool _hasPermissions = false;
   String _statusText = 'Ready to scan';
   double? rssiValue;
   BluetoothDevice? connectedDevice;
   String? connectedDeviceId;
   bool enableRssiHaptic = false;
-  Timer? _rssiUpdateTimer;
   Timer? _reconnectTimer;
   bool _isReconnecting = false;
   int _reconnectAttempts = 0;
   static const int maxReconnectAttempts = 3;
 
   // 可调阈值
-  double closeThreshold = -60;
-  double midThreshold = -80;
+  double closeThreshold = -50;
+  double midThreshold = -85;
   final double rssiMin = -100;
   final double rssiMax = -30;
 
@@ -42,234 +52,192 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
   @override
   void initState() {
     super.initState();
-    _requestPermissions();
+    _checkPermissions();
   }
 
-  Future<void> _requestPermissions() async {
-    final hasPermissions = await PermissionService.requestPermissions();
-    setState(() {
-      _hasPermissions = hasPermissions;
-    });
-    
-    if (!hasPermissions) {
-      _showPermissionDialog();
-    }
+  @override
+  void dispose() {
+    _scanTimer?.cancel();
+    _rssiUpdateTimer?.cancel();
+    _bluetoothService.stopScan();
+    super.dispose();
   }
 
-  void _showPermissionDialog() {
+  Future<void> _checkPermissions() async {
+    Map<Permission, PermissionStatus> statuses = await [
+      Permission.bluetooth,
+      Permission.bluetoothScan,
+      Permission.bluetoothConnect,
+      Permission.location,
+    ].request();
+
+    bool denied = statuses.values.any((status) =>
+        status.isDenied || status.isPermanentlyDenied);
+
+    if (denied) {
+      if (mounted) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Permissions Required'),
-        content: const Text(
-          'This app needs Bluetooth permissions to function properly. '
-          'Please grant the required permissions in the app settings.',
-        ),
+            title: const Text("权限被拒绝"),
+            content: const Text("请前往系统设置中手动开启蓝牙和位置权限，否则功能无法使用。"),
         actions: [
           TextButton(
             onPressed: () {
+                  openAppSettings();
               Navigator.of(context).pop();
-              openAppSettings();
             },
-            child: const Text('Open Settings'),
+                child: const Text("打开设置"),
           ),
         ],
       ),
     );
   }
-
-  void resetThresholds() {
-    setState(() {
-      closeThreshold = -60;
-      midThreshold = -80;
-    });
+    }
   }
 
-  Future<void> _startScanning() async {
-    if (!_hasPermissions) {
-      _showPermissionDialog();
-      return;
-    }
+  void _startScan() {
+    if (!mounted) return;
 
     setState(() {
       _isScanning = true;
-      _statusText = 'Scanning...';
-      _devices.clear();
+      _scanStatus = "Scanning...";
+      _foundDevices.clear();
+      _showRssi = false;
     });
 
-    await BluetoothManager.startScanning();
+    _bluetoothService.startScan().listen((results) {
+      if (!mounted) return;
+      setState(() {
+        // 只保留有名字的设备
+        _foundDevices = results.where((r) => 
+          r.device.platformName.isNotEmpty || 
+          r.device.localName.isNotEmpty || 
+          r.advertisementData.advName.isNotEmpty
+        ).toList();
+        _scanStatus = "Found ${_foundDevices.length} device(s)";
+      });
+    });
+
+    _scanTimer = Timer(const Duration(seconds: 10), () {
+      if (!mounted) return;
     setState(() {
-      // Filter out devices without a name
-      _devices = Map.fromEntries(
-        BluetoothManager.getDiscoveredDevices().entries.where(
-          (entry) => entry.value.name.isNotEmpty,
-        ),
-      );
       _isScanning = false;
-      _statusText = 'Found ${_devices.length} devices';
+        _scanStatus = "Scan completed";
+        _showRssi = true;
+      });
+      _bluetoothService.stopScan();
     });
   }
 
-  void startConnectedRssiListener() {
-    _rssiUpdateTimer?.cancel();
-
-    _rssiUpdateTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
-      if (connectedDevice != null) {
-        final now = DateTime.now();
-        if (_lastRssiUpdate == null || 
-            now.difference(_lastRssiUpdate!) >= rssiUpdateInterval) {
-          final rssi = await BluetoothManager.getRssi(connectedDevice!);
-          if (rssi != null) {
-            _lastRssiUpdate = now;
-            if (mounted) {
-              setState(() {
-                rssiValue = rssi;
-              });
-            }
-
-            if (enableRssiHaptic) {
-              if (rssi > closeThreshold) {
-                HapticFeedback.heavyImpact();
-              } else if (rssi > midThreshold) {
-                HapticFeedback.mediumImpact();
-              } else {
-                HapticFeedback.lightImpact();
-              }
-            }
-          }
-        }
-      }
+  Future<void> _connectToDevice(ScanResult result) async {
+    if (!mounted) return;
+    
+    setState(() {
+      _connectionStatus = "Connecting...";
     });
-  }
 
-  void _updateStatusText(String text) {
-    final now = DateTime.now();
-    if (_lastUiUpdate == null || 
-        now.difference(_lastUiUpdate!) >= uiUpdateInterval) {
-      _lastUiUpdate = now;
-      if (mounted) {
-        setState(() {
-          _statusText = text;
-        });
-      }
-    }
-  }
-
-  void _startReconnectTimer() {
-    _reconnectTimer?.cancel();
-    _reconnectTimer = Timer.periodic(const Duration(seconds: 5), (timer) async {
-      if (connectedDevice != null && !_isReconnecting && _reconnectAttempts < maxReconnectAttempts) {
-        _isReconnecting = true;
-        _reconnectAttempts++;
-        
-        try {
-          await connectedDevice!.connect();
-          _isReconnecting = false;
-          _reconnectAttempts = 0;
-          _updateStatusText('✅ Reconnected to ${connectedDevice!.name}');
-          HapticFeedback.heavyImpact();
-        } catch (e) {
-          _isReconnecting = false;
-          _updateStatusText('⚠️ Reconnection attempt $_reconnectAttempts failed');
-          HapticFeedback.mediumImpact();
-        }
-      }
-    });
-  }
-
-  Future<void> _connectToDevice(BluetoothDevice device) async {
     try {
-      _updateStatusText('Connecting to ${device.name}...');
-
-      await device.connect();
-      connectedDevice = device;
-      connectedDeviceId = device.remoteId.str;
-      enableRssiHaptic = true;
-      _reconnectAttempts = 0;
+      await _bluetoothService.connectToDevice(result.device);
+      await _bluetoothService.setMtu(result.device, 512);
       
-      device.connectionState.listen((state) {
-        if (state == BluetoothConnectionState.disconnected) {
-          _updateStatusText('⚠️ Device disconnected, attempting to reconnect...');
-          _startReconnectTimer();
-        }
+      if (!mounted) return;
+      setState(() {
+        _connectionStatus = "Connected";
+        _connectedDeviceName = result.device.name;
+        _rssiValue = result.rssi.toDouble();
       });
 
-      startConnectedRssiListener();
-      _startReconnectTimer();
-
-      _updateStatusText('✅ Connected to ${device.name}');
-      HapticFeedback.heavyImpact();
+      // 开始监听RSSI
+      _startRssiMonitoring(result.device);
     } catch (e) {
-      _updateStatusText('❌ Connection failed: $e');
-      HapticFeedback.mediumImpact();
+      if (!mounted) return;
+      setState(() {
+        _connectionStatus = "Connection failed: $e";
+      });
     }
   }
 
-  Widget buildRssiMeter() {
-    if (rssiValue == null) return const Text("🔍 No device nearby.");
+  void _startRssiMonitoring(BluetoothDevice device) {
+    _rssiUpdateTimer?.cancel();
+    _rssiUpdateTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      
+      try {
+        int rssi = await device.readRssi();
+        if (!mounted) return;
+        setState(() {
+          _rssiValue = rssi.toDouble();
+        });
+        } catch (e) {
+        print("Error reading RSSI: $e");
+      }
+    });
+  }
 
-    double normalized = ((rssiValue! - rssiMin) / (rssiMax - rssiMin)).clamp(0.0, 1.0);
-    String label;
-    TextStyle style = const TextStyle(fontSize: 32);
+  String _getDeviceName(ScanResult result) {
+    if (result.advertisementData.advName.isNotEmpty) {
+      return result.advertisementData.advName;
+    }
+    
+    if (result.device.localName.isNotEmpty) {
+      return result.device.localName;
+    }
+    
+    if (result.device.platformName.isNotEmpty) {
+      return result.device.platformName;
+        }
 
-    if (rssiValue! > closeThreshold) {
-      label = "🔥 Very Close!";
-    } else if (rssiValue! > midThreshold) {
-      label = "🙂 Nearby";
+    return result.device.remoteId.toString();
+  }
+
+  String _getDistanceCategory(double rssi) {
+    if (rssi >= closeThreshold) {
+      return "Very Close";
+    } else if (rssi >= midThreshold) {
+      return "Near";
+    } else if (rssi > rssiMin) {
+      return "Moderate";
     } else {
-      label = "👀 Far";
+      return "Far";
     }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text("$label (RSSI: ${rssiValue!.toStringAsFixed(1)} dBm)", style: style),
-        const SizedBox(height: 8),
-        LinearProgressIndicator(
-          value: normalized,
-          minHeight: 10,
-          backgroundColor: Colors.grey.shade800,
-          color: Colors.greenAccent,
-        ),
-      ],
-    );
   }
 
-  Widget buildThresholdSlider() {
-    return Column(
+  Widget _buildDeviceList() {
+    if (_foundDevices.isEmpty) {
+      return Center(
+        child: Text(_isScanning ? "Scanning..." : "No devices found"),
+      );
+    }
+
+    return ListView.builder(
+      shrinkWrap: true,
+      itemCount: _foundDevices.length,
+      itemBuilder: (context, index) {
+        final device = _foundDevices[index];
+        final deviceName = _getDeviceName(device);
+        
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 4),
+          child: ListTile(
+            title: Text(deviceName),
+            subtitle: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("📏 RSSI Thresholds (adjust to fine-tune)"),
-        Text("🔥 Very Close > $closeThreshold dBm"),
-        Slider(
-          value: closeThreshold,
-          min: -80,
-          max: -50,
-          divisions: 30,
-          label: closeThreshold.toStringAsFixed(0),
-          onChanged: (val) {
-            setState(() => closeThreshold = val);
-          },
-        ),
-        Text("🙂 Nearby > $midThreshold dBm"),
-        Slider(
-          value: midThreshold,
-          min: -90,
-          max: closeThreshold - 1,
-          divisions: 40,
-          label: midThreshold.toStringAsFixed(0),
-          onChanged: (val) {
-            setState(() => midThreshold = val);
-          },
-        ),
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton(
-            onPressed: resetThresholds,
-            child: const Text("重置默认值"),
+                Text("MAC: ${device.device.remoteId}"),
+                if (_showRssi) Text("RSSI: ${device.rssi} dBm"),
+              ],
+            ),
+            trailing: ElevatedButton(
+              onPressed: _isScanning ? null : () => _connectToDevice(device),
+              child: const Text("Connect"),
           ),
-        )
-      ],
+          ),
+        );
+      },
     );
   }
 
@@ -277,55 +245,63 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bluetooth Devices'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+        title: const Text('Bluetooth'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.qr_code_scanner),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const QRScreen()),
+              );
+            },
         ),
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              _statusText,
-              style: const TextStyle(fontSize: 18),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          ElevatedButton(
-            onPressed: _isScanning ? null : _startScanning,
-            child: Text(_isScanning ? 'Scanning...' : 'Scan for Devices'),
-          ),
-          buildRssiMeter(),
-          buildThresholdSlider(),
-          Expanded(
-            child: ListView.builder(
-              itemCount: _devices.length,
-              itemBuilder: (context, index) {
-                final device = _devices.values.elementAt(index);
-                return ListTile(
-                  title: Text(device.name.isEmpty ? 'Unknown Device' : device.name),
-                  subtitle: Text(device.remoteId.toString()),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.bluetooth_connected),
-                    onPressed: () => _connectToDevice(device),
-                  ),
-                );
-              },
-            ),
-          ),
         ],
       ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+            Text("Status: $_scanStatus"),
+            const SizedBox(height: 8),
+            Text("Connection: $_connectionStatus"),
+            if (_connectedDeviceName != null) ...[
+              const SizedBox(height: 8),
+              Text("Connected to: $_connectedDeviceName"),
+            ],
+            if (_rssiValue != null) ...[
+              const SizedBox(height: 8),
+              Text("Signal Strength: ${_rssiValue!.toStringAsFixed(1)} dBm"),
+              const SizedBox(height: 4),
+              Text("Distance: ${_getDistanceCategory(_rssiValue!)}"),
+              const SizedBox(height: 8),
+              LinearProgressIndicator(
+                value: (_rssiValue! - rssiMin) / (rssiMax - rssiMin),
+                backgroundColor: Colors.grey[200],
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  _rssiValue! >= closeThreshold
+                      ? Colors.green
+                      : _rssiValue! >= midThreshold
+                          ? Colors.blue
+                          : _rssiValue! > rssiMin
+                              ? Colors.orange
+                              : Colors.red,
+                ),
+              ),
+            ],
+            const SizedBox(height: 16),
+          ElevatedButton(
+              onPressed: _isScanning ? null : _startScan,
+              child: Text(_isScanning ? "Scanning..." : "Scan"),
+          ),
+            const SizedBox(height: 16),
+          Expanded(
+              child: _buildDeviceList(),
+            ),
+          ],
+          ),
+      ),
     );
-  }
-
-  @override
-  void dispose() {
-    _rssiUpdateTimer?.cancel();
-    _reconnectTimer?.cancel();
-    connectedDevice?.disconnect();
-    FlutterBluePlus.stopScan();
-    super.dispose();
   }
 } 
