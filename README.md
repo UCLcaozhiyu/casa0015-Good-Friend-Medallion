@@ -281,8 +281,7 @@ For questions or contributions, please:
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
- 
-## Contact Details
+
 Developed by: Zhiyu Cao
 - Email: [ucfnzca@ucl.ac.uk]
 ---
