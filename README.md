@@ -1,6 +1,39 @@
-# Good Friend Medallion 🧙‍♂️
+# **🔵 Good Friend Medallion - P2P Direction Finder**
 
-> "When danger is near, it trembles..." - Inspired by the Witcher's medallion, this app helps you sense your friends in the real world.
+**"Find your target, no server required."**
+> "When danger is near, it trembles..." - Inspired by the Witcher's medallion
+> 📌 **A Bluetooth-based peer-to-peer location and direction finder.**  
+> Inspired by the **Witcher's medallion**, this app vibrates when you are close to another user running the app. The closer you get, the stronger the vibration.
+
+![Witcher Medallion](https://vignette.wikia.nocookie.net/witcher/images/0/03/Tw3_medallion.png/revision/latest/scale-to-width-down/2000?cb=20160416054840)  
+**"The Witcher Medallion – When danger is near, it trembles..."**
+<sub>*Inspired by the Witcher's Medallion, this app helps you sense your target in the real world.*</sub>
+
+---
+
+## 🎯 Project Design Idea
+
+### Core Concept
+Just like the Witcher's medallion vibrates in the presence of magic, this app helps you sense your friends in the real world. The closer you get to your target, the stronger the vibration feedback becomes.
+
+### Key Design Features
+✅ **P2P Communication** – No cloud, no server, full privacy  
+✅ **Real-time Distance & Direction** – Uses GPS & device sensors to calculate target location  
+✅ **Vibration Feedback** – The closer you get, the stronger the vibration  
+✅ **Works Offline** – Ideal for rescue, social encounters, or real-world games  
+
+### How It Works
+1. **Discovery via Bluetooth (BLE)**
+   - One device advertises itself via BLE
+   - Another device scans and finds the target
+   - BLE exchanges basic identification info
+
+2. **Real-time Feedback**
+   - The app calculates bearing & distance
+   - Vibration intensity increases as you get closer
+   - No internet required! Fully offline, private, secure
+
+![App Interface](docs/assets/gfm3.0/b0ae231ef1bb6dbf41cb21c37790aa5.jpg)
 
 ![App Interface](docs/assets/gfm3.0/b0ae231ef1bb6dbf41cb21c37790aa5.jpg)
 
