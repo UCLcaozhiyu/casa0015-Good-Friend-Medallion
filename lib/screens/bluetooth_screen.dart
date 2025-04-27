@@ -26,6 +26,7 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
   double? _rssiValue;
   Timer? _scanTimer;
   Timer? _rssiUpdateTimer;
+  Timer? _vibrationTimer;
   bool _showRssi = false;
   bool _hasPermissions = false;
   String _statusText = 'Ready to scan';
@@ -39,10 +40,11 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
   static const int maxReconnectAttempts = 3;
 
   // 可调阈值
-  double closeThreshold = -50;
-  double midThreshold = -85;
-  final double rssiMin = -100;
-  final double rssiMax = -30;
+  double closeThreshold = -50;  // 非常近
+  double midThreshold = -70;    // 中等距离
+  double farThreshold = -85;    // 较远
+  final double rssiMin = -100;  // 最小RSSI值
+  final double rssiMax = -30;   // 最大RSSI值
 
   DateTime? _lastRssiUpdate;
   static const Duration rssiUpdateInterval = Duration(milliseconds: 500);
@@ -59,6 +61,7 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
   void dispose() {
     _scanTimer?.cancel();
     _rssiUpdateTimer?.cancel();
+    _vibrationTimer?.cancel();
     _bluetoothService.stopScan();
     super.dispose();
   }
@@ -130,6 +133,79 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
     });
   }
 
+  void _startRssiMonitoring(BluetoothDevice device) {
+    _rssiUpdateTimer?.cancel();
+    _rssiUpdateTimer = Timer.periodic(const Duration(milliseconds: 1000), (timer) async {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      
+      try {
+        // 检查设备是否仍然连接
+        if (!device.isConnected) {
+          print("Device disconnected, attempting to reconnect...");
+          await _bluetoothService.connectToDevice(device);
+        }
+        
+        int rssi = await device.readRssi();
+        if (!mounted) return;
+        
+        setState(() {
+          _rssiValue = rssi.toDouble();
+        });
+        
+        // 只有在RSSI值有效时才更新震动
+        if (_rssiValue != null && _rssiValue! > rssiMin) {
+          _startVibrationFeedback(_rssiValue!);
+        }
+        
+      } catch (e) {
+        print("Error reading RSSI: $e");
+        _vibrationTimer?.cancel();  // 停止震动
+        
+        // 如果发生错误，尝试重新连接
+        try {
+          await _bluetoothService.connectToDevice(device);
+        } catch (reconnectError) {
+          print("Reconnection failed: $reconnectError");
+        }
+      }
+    });
+  }
+
+  void _startVibrationFeedback(double rssi) {
+    _vibrationTimer?.cancel();
+    
+    // 只在RSSI值在有效范围内时触发震动
+    if (rssi <= rssiMin || rssi >= rssiMax) {
+      return;
+    }
+    
+    int vibrationInterval = _calculateVibrationInterval(rssi);
+    
+    _vibrationTimer = Timer.periodic(Duration(milliseconds: vibrationInterval), (timer) {
+      HapticFeedback.mediumImpact();
+    });
+  }
+
+  int _calculateVibrationInterval(double rssi) {
+    // 使用线性插值计算震动间隔
+    if (rssi >= closeThreshold) {
+      return 200;  // 非常近 - 快速震动
+    } else if (rssi >= midThreshold) {
+      // 在closeThreshold和midThreshold之间进行线性插值
+      double ratio = (rssi - midThreshold) / (closeThreshold - midThreshold);
+      return 200 + ((1 - ratio) * 300).round();  // 200-500ms
+    } else if (rssi >= farThreshold) {
+      // 在midThreshold和farThreshold之间进行线性插值
+      double ratio = (rssi - farThreshold) / (midThreshold - farThreshold);
+      return 500 + ((1 - ratio) * 500).round();  // 500-1000ms
+    } else {
+      return 1000;  // 较远 - 慢速震动
+    }
+  }
+
   Future<void> _connectToDevice(ScanResult result) async {
     if (!mounted) return;
     
@@ -139,7 +215,6 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
 
     try {
       await _bluetoothService.connectToDevice(result.device);
-      await _bluetoothService.setMtu(result.device, 512);
       
       if (!mounted) return;
       setState(() {
@@ -148,34 +223,16 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
         _rssiValue = result.rssi.toDouble();
       });
 
-      // 开始监听RSSI
       _startRssiMonitoring(result.device);
+      _startVibrationFeedback(result.rssi.toDouble());
+      
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _connectionStatus = "Connection failed: $e";
       });
+      _vibrationTimer?.cancel();
     }
-  }
-
-  void _startRssiMonitoring(BluetoothDevice device) {
-    _rssiUpdateTimer?.cancel();
-    _rssiUpdateTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
-      
-      try {
-        int rssi = await device.readRssi();
-        if (!mounted) return;
-        setState(() {
-          _rssiValue = rssi.toDouble();
-        });
-        } catch (e) {
-        print("Error reading RSSI: $e");
-      }
-    });
   }
 
   String _getDeviceName(ScanResult result) {
@@ -185,11 +242,11 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
     
     if (result.device.localName.isNotEmpty) {
       return result.device.localName;
-    }
+        }
     
     if (result.device.platformName.isNotEmpty) {
       return result.device.platformName;
-        }
+    }
 
     return result.device.remoteId.toString();
   }
@@ -284,11 +341,11 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
                       ? Colors.green
                       : _rssiValue! >= midThreshold
                           ? Colors.blue
-                          : _rssiValue! > rssiMin
+                          : _rssiValue! >= farThreshold
                               ? Colors.orange
                               : Colors.red,
-                ),
-              ),
+            ),
+          ),
             ],
             const SizedBox(height: 16),
           ElevatedButton(
