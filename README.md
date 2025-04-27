@@ -54,7 +54,7 @@ Good Friend Medallion is an innovative mobile application that combines Bluetoot
 - **Dynamic Compass** – Points directly to your friend's location
 - **Signal Strength Meter** – Visual representation of connection strength
 - **Distance Indicator** – Visual and haptic feedback
-- **Device Scanner** – Discover nearby friends automatically
+- **Device Scanner** – Discover nearby automatically
 ## QR Code docking and data logging
 ![Compass Interface](landingpage/assets/gfm3.0/cf814fcd22faa8d7e066ec00b018860.jpg)
 ## The compass points to the friend screen
