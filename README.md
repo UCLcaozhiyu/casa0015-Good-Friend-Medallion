@@ -1,4 +1,4 @@
-# **🔵 Good Friend Medallion - P2P Direction Finder**
+# **🔵 Good Friend Medallion - P2P BLE Finder**
 
 **"Find your target, no server required."**
 
