@@ -263,7 +263,7 @@ _foundDevices = results.where((r) =>
 
 ## 📚 Documentation
 
-- [Project Website](https://github.com/UCLcaozhiyu/casa0015-Good-Friend-Medallion/blob/main/landingpage/index.html)
+- [Project Website](https://uclcaozhiyu.github.io/casa0015-Good-Friend-Medallion/)
 
 ## 🤝 Contributing
 
