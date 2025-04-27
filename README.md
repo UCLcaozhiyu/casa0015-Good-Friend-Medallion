@@ -1,9 +1,9 @@
 # **🔵 Good Friend Medallion - P2P Direction Finder**
 
 **"Find your target, no server required."**
-> "When danger is near, it trembles..." - Inspired by the Witcher's medallion
+
 > 📌 **A Bluetooth-based peer-to-peer location and direction finder.**  
-> Inspired by the **Witcher's medallion**, this app vibrates when you are close to another user running the app. The closer you get, the stronger the vibration.
+> Inspired by the **Witcher's medallion**, The program vibrates when you are near another user, and use Magic (BLE) to probe nearby Bluetooth devices to find out how far away they are from you, and the closer you are after docking that device, the stronger the vibration.
 
 ![Witcher Medallion](https://vignette.wikia.nocookie.net/witcher/images/0/03/Tw3_medallion.png/revision/latest/scale-to-width-down/2000?cb=20160416054840)  
 **"The Witcher Medallion – When danger is near, it trembles..."**
@@ -26,24 +26,21 @@ Just like the Witcher's medallion vibrates in the presence of magic, this app he
 1. **Discovery via Bluetooth (BLE)**
    - One device advertises itself via BLE
    - Another device scans and finds the target
-   - BLE exchanges basic identification info
 
 2. **Real-time Feedback**
    - The app calculates bearing & distance
    - Vibration intensity increases as you get closer
    - No internet required! Fully offline, private, secure
 
-![App Interface](docs/assets/gfm3.0/b0ae231ef1bb6dbf41cb21c37790aa5.jpg)
+## Good Friends Medal v3.0 Introduction
 
-![App Interface](docs/assets/gfm3.0/b0ae231ef1bb6dbf41cb21c37790aa5.jpg)
+![App Interface](docs/assets/gfm3.0/589960efe12dd7ad952a19a9459bd36.jpg)
 
 ## 🌟 Overview
 
-Good Friend Medallion is an innovative mobile application that combines Bluetooth Low Energy (BLE) and GPS technology to help you find your friends in the real world. Just like the Witcher's medallion vibrates when magic is near, this app provides haptic feedback as you get closer to your friends.
+Good Friend Medallion is an innovative mobile application that combines Bluetooth Low Energy (BLE) and GPS technology to help you find your friends in the real world. Just like the Witcher's medallion vibrates when magic is near, the app can also help you detect nearby Bluetooth devices and tell you the distance to you, this app provides haptic feedback as you get closer to Bluetooth signal source. Let all hidden Bluetooth devices have nowhere to hide before you!
 
 **"Find your target, no server required."**
-
-![Location Tracking](docs/assets/gfm3.0/d9ea1f52dcced32691b50368b3a048a.jpg)
 
 ## ✨ Key Features
 
@@ -58,8 +55,13 @@ Good Friend Medallion is an innovative mobile application that combines Bluetoot
 - **Signal Strength Meter** – Visual representation of connection strength
 - **Distance Indicator** – Visual and haptic feedback
 - **Device Scanner** – Discover nearby friends automatically
-
+## QR Code docking and data logging
 ![Compass Interface](docs/assets/gfm3.0/cf814fcd22faa8d7e066ec00b018860.jpg)
+## The compass points to the friend screen
+![Location Tracking](docs/assets/gfm3.0/d9ea1f52dcced32691b50368b3a048a.jpg)
+## Bluetooth device detection function page
+![Location Tracking](docs/assets/gfm3.0/c0e335e0f7e48911e2b8f746b3b73bf.jpg)
+
 
 ## 🛠️ How It Works
 
@@ -67,7 +69,6 @@ Good Friend Medallion is an innovative mobile application that combines Bluetoot
 - Device advertises itself via BLE
 - Other devices scan and find targets
 - RSSI-based distance estimation
-- Basic device information exchange
 
 ### 2️⃣ Location Tracking
 - GPS coordinates tracking
@@ -78,10 +79,7 @@ Good Friend Medallion is an innovative mobile application that combines Bluetoot
 ### 3️⃣ User Feedback
 - Visual direction indicator
 - Progressive vibration intensity
-- Distance-based alerts
 - Connection status updates
-
-![Settings Screen](docs/assets/gfm3.0/589960efe12dd7ad952a19a9459bd36.jpg)
 
 ## 🚀 Technical Implementation
 
@@ -253,7 +251,6 @@ _foundDevices = results.where((r) =>
    - Connection state persistence
 
 3. **UI/UX Improvements**
-   - Animated direction indicators
    - Custom vibration patterns
    - Power efficiency optimizations
 
@@ -266,30 +263,28 @@ _foundDevices = results.where((r) =>
 
 ## 📚 Documentation
 
-- [Project Website](https://uclcaozhiyu.github.io/casa0015-Good-Friend-Medallion/)
-- [API Documentation](docs/api.md)
-- [Development Guide](docs/development.md)
-- [Privacy Policy](docs/privacy.md)
+- [Project Website](https://github.com/UCLcaozhiyu/casa0015-Good-Friend-Medallion/blob/main/docs/index.html)
 
 ## 🤝 Contributing
 
 We welcome contributions! Here's how you can help:
 - Report bugs and suggest features
-- Submit pull requests
 - Improve documentation
 - Share your experience
 
 ## 📧 Contact & Support
 
 For questions or contributions, please:
-- Open an issue on GitHub
-- Email: [Your Email]
-- Visit our [Discussion Board](https://github.com/UCLcaozhiyu/casa0015-Good-Friend-Medallion/discussions)
+
+- Email: [ucfnzca@ucl.ac.uk]
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
+ 
+## Contact Details
+Developed by: Zhiyu Cao
+- Email: [ucfnzca@ucl.ac.uk]
 ---
 
 *This project is part of the CASA0015 Mobile Systems Interactions course at UCL.* 
