@@ -6,7 +6,7 @@
 
 ## 🌟 Overview
 
-Good Friend Medallion is an innovative P2P direction finder that combines Bluetooth Low Energy (BLE) and WiFi Direct technology to help you find your friends in the real world. Just like the Witcher's medallion vibrates when magic is near, this app provides haptic feedback as you get closer to your friends.
+Good Friend Medallion is an innovative mobile application that combines Bluetooth Low Energy (BLE) and GPS technology to help you find your friends in the real world. Just like the Witcher's medallion vibrates when magic is near, this app provides haptic feedback as you get closer to your friends.
 
 **"Find your target, no server required."**
 
@@ -16,36 +16,36 @@ Good Friend Medallion is an innovative P2P direction finder that combines Blueto
 
 ### 🔍 Core Functionality
 - **P2P Communication** – No cloud, no server, full privacy
-- **Hybrid Technology** – BLE for discovery, WiFi Direct for fast data exchange
+- **Hybrid Technology** – BLE for close-range discovery, GPS for longer distances
 - **Real-time Updates** – Instant distance and direction information
 - **Works Offline** – Ideal for rescue, social encounters, or real-world games
 
 ### 📱 Smart Interface
 - **Dynamic Compass** – Points directly to your friend's location
 - **Signal Strength Meter** – Visual representation of connection strength
-- **Threshold Controls** – Adjustable proximity settings
-- **Authentication Screens** – Secure user authentication interface
+- **Distance Indicator** – Visual and haptic feedback
+- **Device Scanner** – Discover nearby friends automatically
 
 ![Compass Interface](docs/assets/gfm3.0/cf814fcd22faa8d7e066ec00b018860.jpg)
 
 ## 🛠️ How It Works
 
 ### 1️⃣ Discovery Phase (BLE)
-- One device **advertises** itself via BLE
-- Another device **scans** and finds the target
-- BLE sends **basic info** (WiFi SSID, unique ID)
-- **RSSI-based** distance estimation
+- Device advertises itself via BLE
+- Other devices scan and find targets
+- RSSI-based distance estimation
+- Basic device information exchange
 
-### 2️⃣ Data Exchange (WiFi Direct)
-- Devices switch to **WiFi Direct** after discovery
-- High-speed **GPS and compass data** exchange
-- Real-time position updates
-- Secure peer-to-peer connection
+### 2️⃣ Location Tracking
+- GPS coordinates tracking
+- Real-time distance calculation
+- Bearing computation for direction
+- Location permission handling
 
 ### 3️⃣ User Feedback
-- **Bearing & distance** calculation
-- **Progressive vibration** intensity
-- Visual direction indicators
+- Visual direction indicator
+- Progressive vibration intensity
+- Distance-based alerts
 - Connection status updates
 
 ![Settings Screen](docs/assets/gfm3.0/589960efe12dd7ad952a19a9459bd36.jpg)
@@ -54,16 +54,16 @@ Good Friend Medallion is an innovative P2P direction finder that combines Blueto
 
 ### Core Stack
 - **Flutter Framework** (>=3.0.0)
-- **Firebase** – Authentication and data storage
 - **Flutter Blue Plus** (^1.35.3) – BLE implementation
 - **Geolocator** (^10.1.0) – Location services
 - **Permission Handler** (^11.0.1) – Device permissions
+- **Vibration** (^1.7.4) – Haptic feedback
 
 ### Configuration Options
 - Adjustable signal strength thresholds
-- Customizable vibration feedback intensity
-- User authentication preferences
+- Customizable vibration patterns
 - Location update frequency
+- Device scanning intervals
 
 ## 📱 Installation
 
@@ -87,7 +87,7 @@ Good Friend Medallion is an innovative P2P direction finder that combines Blueto
 1. **Prerequisites** ⚙️
    - Flutter SDK (>=3.0.0)
    - Android Studio / VS Code
-   - Android 10+ (for WiFi Direct)
+   - Android 10+ (for BLE support)
    - Git
 
 2. **Clone and Setup** 💻
@@ -97,64 +97,58 @@ Good Friend Medallion is an innovative P2P direction finder that combines Blueto
    flutter pub get
    ```
 
-3. **Firebase Configuration** 🔥
-   - Create a new Firebase project
-   - Add `google-services.json` to `android/app`
-   - Enable Authentication and Firestore
-
-4. **Run the App** 🏃‍♂️
+3. **Run the App** 🏃‍♂️
    ```bash
    flutter run
    ```
 
+## 📈 Project Evolution
+
+### Initial Concept Development
+- Based on Witcher's medallion concept
+- Focus on P2P communication
+- Emphasis on privacy and offline functionality
+
+### Technical Research Phase
+- Bluetooth Low Energy (BLE) capabilities study
+- Location services integration
+- Sensor data processing
+- Battery optimization research
+
+### Core Development Phases
+1. **Service Layer Implementation**
+   - Bluetooth service development
+   - Location service integration
+   - State management architecture
+
+2. **UI/UX Development**
+   - Medallion-inspired interface design
+   - Real-time feedback visualization
+   - Vibration intensity indicators
+   - User-friendly navigation
+
+3. **Testing and Optimization**
+   - Performance testing
+   - Battery consumption optimization
+   - Connection stability improvements
+   - User experience refinement
+
 ## 🔄 Future Roadmap
 
 ### Planned Features
-- **Enhanced WiFi Direct Integration** – Faster data exchange
-- **Advanced Location Features** – Improved accuracy and tracking
+- **WiFi Direct Integration** – For faster data exchange
+- **Enhanced Location Features** – Improved accuracy and tracking
 - **Signal Strength Optimization** – Better distance estimation
-- **Additional Authentication Methods** – More login options
-- **Offline Mode Enhancements** – Improved standalone operation
 - **Group Finding Mode** – Find multiple friends simultaneously
 - **Custom Vibration Patterns** – User-defined feedback patterns
 - **Energy Optimization** – Extended battery life
 - **Cross-Platform Support** – iOS, Web, Desktop versions
 
 ### Research Areas
-- Machine learning for better distance estimation
+- WiFi Direct implementation possibilities
 - Advanced signal processing algorithms
 - Battery consumption optimization
 - Enhanced security protocols
-
-## 🔒 Privacy & Security
-
-- No external server dependency
-- End-to-end encrypted communication
-- Local data processing
-- Minimal permission requirements
-- Firebase security rules implementation
-
-## 📚 Documentation
-
-- [Project Website](https://uclcaozhiyu.github.io/casa0015-Good-Friend-Medallion/)
-- [API Documentation](docs/api.md)
-- [Development Guide](docs/development.md)
-- [Privacy Policy](docs/privacy.md)
-
-## 🤝 Contributing
-
-We welcome contributions! Here's how you can help:
-- Report bugs and suggest features
-- Submit pull requests
-- Improve documentation
-- Share your experience
-
-## 📧 Contact & Support
-
-For questions or contributions, please:
-- Open an issue on GitHub
-- Email: [Your Email]
-- Visit our [Discussion Board](https://github.com/UCLcaozhiyu/casa0015-Good-Friend-Medallion/discussions)
 
 ## 📓 Development Log
 
@@ -201,23 +195,6 @@ _foundDevices = results.where((r) =>
    - Visual indicators
    - Distance calculation
 
-#### 📅 Technical Challenges Resolved
-
-1. **Build System Issues**
-   - Fixed JDK configuration
-   - Resolved NDK setup problems
-   - Optimized Gradle build process
-
-2. **BLE Optimization**
-   - Implemented RSSI smoothing
-   - Added dynamic feedback adjustment
-   - Enhanced UI responsiveness
-
-3. **GPS Integration**
-   - Added friend discovery logic
-   - Implemented distance calculation
-   - Optimized battery usage
-
 ### 🔄 Recent Improvements
 
 1. **BLE RSSI Smoothing**
@@ -230,22 +207,11 @@ _foundDevices = results.where((r) =>
    - Improved status icons
    - Enhanced visual feedback
 
-3. **System Architecture**
-```
-[User Interface (UI)]
-    ↓
-[Location Module (GPS)] + [Bluetooth Module (BLE)]
-    ↓
-[Backend Server (Friend Location Database)]
-    ↓
-[Feedback Mechanism (Vibration / Icons / Sounds)]
-```
-
 ### 📈 Upcoming Features
 
 1. **Enhanced Friend Discovery**
-   - GPS position upload module
-   - Friend list management
+   - Improved BLE scanning
+   - Better device filtering
    - Nearby friend notifications
 
 2. **Advanced BLE Features**
@@ -257,6 +223,35 @@ _foundDevices = results.where((r) =>
    - Animated direction indicators
    - Custom vibration patterns
    - Power efficiency optimizations
+
+## 🔒 Privacy & Security
+
+- No external server dependency
+- Local data processing only
+- Minimal permission requirements
+- Secure BLE communication
+
+## 📚 Documentation
+
+- [Project Website](https://uclcaozhiyu.github.io/casa0015-Good-Friend-Medallion/)
+- [API Documentation](docs/api.md)
+- [Development Guide](docs/development.md)
+- [Privacy Policy](docs/privacy.md)
+
+## 🤝 Contributing
+
+We welcome contributions! Here's how you can help:
+- Report bugs and suggest features
+- Submit pull requests
+- Improve documentation
+- Share your experience
+
+## 📧 Contact & Support
+
+For questions or contributions, please:
+- Open an issue on GitHub
+- Email: [Your Email]
+- Visit our [Discussion Board](https://github.com/UCLcaozhiyu/casa0015-Good-Friend-Medallion/discussions)
 
 ## 📄 License
 

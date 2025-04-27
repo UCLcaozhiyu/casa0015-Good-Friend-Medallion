@@ -242,7 +242,73 @@ flutter pub get
 
 ---
 
-(Step 10 and beyond to be continued based on actual development progress)
+## Step 10: Bluetooth Device Name Display Fix (April 27, 2025)
+
+### 🔧 Problem Description
+During the Bluetooth scanning functionality, some devices were displaying as "Unknown Device", which negatively impacted user experience and device identification.
+
+### 🔎 Problem Analysis
+By comparing the original code with the current implementation, the main differences were found in the device list filtering and display logic:
+
+1. Original code only displayed devices with names:
+```dart
+foundDevices = results
+    .where((r) => r.device.name.isNotEmpty)
+    .toList();
+```
+
+2. Current implementation was showing all scanned devices, including those without names.
+
+### 🛠 Solution Implementation
+Modified the device scanning and display logic to adopt a similar approach to the original code:
+
+1. Added filtering conditions when processing scan results:
+```dart
+_foundDevices = results.where((r) => 
+  r.device.platformName.isNotEmpty || 
+  r.device.localName.isNotEmpty || 
+  r.advertisementData.advName.isNotEmpty
+).toList();
+```
+
+2. Optimized device name retrieval logic:
+```dart
+String _getDeviceName(ScanResult result) {
+  if (result.advertisementData.advName.isNotEmpty) {
+    return result.advertisementData.advName;
+  }
+  
+  if (result.device.localName.isNotEmpty) {
+    return result.device.localName;
+  }
+  
+  if (result.device.platformName.isNotEmpty) {
+    return result.device.platformName;
+  }
+
+  return result.device.remoteId.toString();
+}
+```
+
+3. Removed debug information display for a cleaner interface.
+
+### 📈 Improvements Achieved
+- Only displays devices with names, avoiding "Unknown Device" entries
+- Retained MAC address display for device identification
+- Cleaner and more concise interface
+
+### 🔄 Future Optimization Suggestions
+1. Consider adding device type filtering
+2. Add signal strength threshold filtering
+3. Consider implementing device connection state persistence
+
+### 📁 Related Files
+- `lib/screens/bluetooth_screen.dart`
+- `lib/services/bluetooth_service.dart`
+
+---
+
+(Step 11 and beyond to be continued based on actual development progress)
 
 
 # 🖼️ Sneak Peek of Current App
@@ -263,4 +329,4 @@ flutter pub get
 
 ---
 
-> “The path will be dangerous, but your medallion will guide you.” 🐺
+> "The path will be dangerous, but your medallion will guide you." 🐺
