@@ -34,7 +34,7 @@ Just like the Witcher's medallion vibrates in the presence of magic, this app he
 
 ## Good Friends Medal v3.0 Introduction
 
-![App Interface](docs/assets/gfm3.0/589960efe12dd7ad952a19a9459bd36.jpg)
+![App Interface](landingpage/assets/gfm3.0/589960efe12dd7ad952a19a9459bd36.jpg)
 
 ## 🌟 Overview
 
@@ -56,11 +56,11 @@ Good Friend Medallion is an innovative mobile application that combines Bluetoot
 - **Distance Indicator** – Visual and haptic feedback
 - **Device Scanner** – Discover nearby friends automatically
 ## QR Code docking and data logging
-![Compass Interface](docs/assets/gfm3.0/cf814fcd22faa8d7e066ec00b018860.jpg)
+![Compass Interface](landingpage/assets/gfm3.0/cf814fcd22faa8d7e066ec00b018860.jpg)
 ## The compass points to the friend screen
-![Location Tracking](docs/assets/gfm3.0/d9ea1f52dcced32691b50368b3a048a.jpg)
+![Location Tracking](landingpage/assets/gfm3.0/d9ea1f52dcced32691b50368b3a048a.jpg)
 ## Bluetooth device detection function page
-![Location Tracking](docs/assets/gfm3.0/c0e335e0f7e48911e2b8f746b3b73bf.jpg)
+![Location Tracking](landingpage/assets/gfm3.0/c0e335e0f7e48911e2b8f746b3b73bf.jpg)
 
 
 ## 🛠️ How It Works
@@ -263,7 +263,7 @@ _foundDevices = results.where((r) =>
 
 ## 📚 Documentation
 
-- [Project Website](https://github.com/UCLcaozhiyu/casa0015-Good-Friend-Medallion/blob/main/docs/index.html)
+- [Project Website](https://github.com/UCLcaozhiyu/casa0015-Good-Friend-Medallion/blob/main/landingpage/index.html)
 
 ## 🤝 Contributing
 
