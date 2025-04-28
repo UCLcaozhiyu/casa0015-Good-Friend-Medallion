@@ -164,7 +164,7 @@ flutter pub get
 
 ---
 
-## Step 8: BLE Distance Optimization and Friend Matching (April 27, 2025)
+## Step 8: BLE Distance Optimization and Friend Matching (April 22, 2025)
 
 ### 🔧 Problems Addressed
 - Limited BLE effective range makes direct long-distance friend matching difficult.
@@ -192,7 +192,7 @@ flutter pub get
 
 ---
 
-## Step 9: Planning GPS Assisted Friend Discovery (April 27, 2025)
+## Step 9: Planning GPS Assisted Friend Discovery (April 25, 2025)
 
 ### 🧠 Insights and Ideas
 - BLE can only accurately sense within ~10 meters.
