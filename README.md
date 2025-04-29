@@ -328,6 +328,4 @@ Developed by: Zhiyu Cao
 
 ### API Integration
 - Enhanced compass functionality
-- Improved location tracking
-- Real-time data synchronization
-- Better device management
+- Real-time Weather data synchronization (by OpenWeatherMap)
