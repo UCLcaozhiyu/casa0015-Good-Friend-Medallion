@@ -1,0 +1,2 @@
+C:/Users/22050/Desktop/casa0015-Good-Friend-Medallion/android/app/.cxx/Debug/346v203v/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/22050/Desktop/casa0015-Good-Friend-Medallion/android/app/.cxx/Debug/346v203v/armeabi-v7a/CMakeFiles/rebuild_cache.dir
