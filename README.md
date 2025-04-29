@@ -308,7 +308,7 @@ Developed by: Zhiyu Cao
 ### BLE Connection and RSSI Enhancements
 - Improved RSSI signal strength display
 - Enhanced connection stability
-- Optimized distance calculation
+- Optimized distance calculation (0 to 15m)
 - Added API integration for better accuracy
 
 ### Device List Display Improvements
