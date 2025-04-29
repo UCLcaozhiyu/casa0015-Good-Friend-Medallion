@@ -9,6 +9,9 @@ import '../services/bluetooth_service.dart';
 import 'compass_screen.dart';
 import 'bluetooth_screen.dart';
 import 'dart:convert';
+import 'package:flutter_compass/flutter_compass.dart';
+import 'package:geolocator/geolocator.dart';
+import 'dart:async';
 
 class QRScreen extends StatefulWidget {
   const QRScreen({Key? key}) : super(key: key);
@@ -23,6 +26,8 @@ class _QRScreenState extends State<QRScreen> {
   bool _isGenerating = false;
   bool _hasCameraPermission = false;
   List<Map<String, dynamic>> _matches = [];
+  StreamSubscription<CompassEvent>? _compassSubscription;
+  StreamSubscription<Position>? _positionSubscription;
 
   @override
   void initState() {

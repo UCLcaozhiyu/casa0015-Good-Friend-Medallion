@@ -183,22 +183,45 @@ Good Friend Medallion is an innovative mobile application that combines Bluetoot
 
 ## 📓 Development Log
 
-### Latest Update (April 27, 2025)
+### Latest Update (April 28, 2024)
 
-#### 🔧 BLE Device Name Display Fix
-- **Issue**: Some devices were showing as "Unknown Device"
-- **Solution**: Implemented improved device filtering and name resolution
-```dart
-_foundDevices = results.where((r) => 
-  r.device.platformName.isNotEmpty || 
-  r.device.localName.isNotEmpty || 
-  r.advertisementData.advName.isNotEmpty
-).toList();
-```
-- **Improvements**:
-  - Better device name display
-  - MAC address fallback for identification
-  - Cleaner UI without debug information
+#### 🔧 BLE Connection and RSSI Enhancement
+- **Device List Display**
+  - Improved RSSI signal strength visualization
+  - Added distance categories with color coding
+  - Enhanced device name resolution
+  ```dart
+  Text(
+    'RSSI: ${result.rssi} dBm (${_getDistanceCategory(result.rssi.toDouble())})',
+    style: TextStyle(
+      color: result.rssi > -70 ? Colors.green : 
+             result.rssi > -90 ? Colors.orange : Colors.red,
+    ),
+  )
+  ```
+
+![Enhanced Device List](assets/updates/2024-04-28/device_list.png)
+*Enhanced device list with RSSI values and distance categories*
+
+- **Connection Logic**
+  - Implemented stable reconnection mechanism
+  - Added connection state verification
+  - Enhanced error handling
+  - Optimized MTU settings for better performance
+
+![Connection Workflow](assets/updates/2024-04-28/connection_flow.png)
+*Updated Bluetooth connection workflow diagram*
+
+- **RSSI Monitoring**
+  - Added timeout handling
+  - Improved update frequency
+  - Enhanced stability
+  - Better disconnection handling
+
+![RSSI Monitoring](assets/updates/2024-04-28/rssi_monitoring.png)
+*Real-time RSSI monitoring and distance feedback*
+
+For detailed changelog, see [Update Log](app_update.md)
 
 ### Development Timeline
 
@@ -286,4 +309,76 @@ Developed by: Zhiyu Cao
 - Email: [ucfnzca@ucl.ac.uk]
 ---
 
-*This project is part of the CASA0015 Mobile Systems Interactions course at UCL.* 
+*This project is part of the CASA0015 Mobile Systems Interactions course at UCL.*
+
+## 最新更新
+
+### 2024年4月28日更新
+- 优化了蓝牙设备列表显示和连接逻辑
+- 改进了RSSI信号强度监控
+- 提升了应用性能和稳定性
+- 详细更新内容请查看 [更新日志](app_update.md)
+
+## 功能特点
+
+- 蓝牙设备扫描和连接
+  - 实时RSSI信号强度显示
+  - 距离类别指示（Very Close/Near/Moderate/Far）
+  - 信号强度颜色编码
+  - 自动重连机制
+- 二维码配对系统
+- 电子罗盘导航
+- 好友管理系统
+
+## 安装要求
+
+- Flutter 3.0.0 或更高版本
+- Android 6.0 (API level 23) 或更高版本
+- iOS 11.0 或更高版本
+- 支持BLE的设备
+
+## 权限要求
+
+- 蓝牙权限（扫描和连接）
+- 位置权限
+- 相机权限（用于扫描二维码）
+
+## 开发环境设置
+
+1. 克隆仓库
+```bash
+git clone https://github.com/yourusername/good-friend-medallion.git
+```
+
+2. 安装依赖
+```bash
+flutter pub get
+```
+
+3. 运行应用
+```bash
+flutter run
+```
+
+## 使用说明
+
+1. 启动应用并授予必要权限
+2. 使用二维码扫描添加好友
+3. 在蓝牙界面查看附近的好友设备
+4. 使用罗盘功能导航到好友位置
+
+## 更新日志
+
+查看完整的更新历史请访问 [更新日志](app_update.md)
+
+## 截图
+
+[在此处添加最新的应用截图]
+
+## 贡献指南
+
+欢迎提交 Pull Requests 和 Issues。
+
+## 许可证
+
+本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件 

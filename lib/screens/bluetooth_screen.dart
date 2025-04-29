@@ -9,16 +9,16 @@ import 'qr_screen.dart';
 import 'dart:async';
 
 class BluetoothScreen extends StatefulWidget {
-  const BluetoothScreen({super.key});
+  const BluetoothScreen({Key? key}) : super(key: key);
 
   @override
-  State<BluetoothScreen> createState() => _BluetoothScreenState();
+  _BluetoothScreenState createState() => _BluetoothScreenState();
 }
 
 class _BluetoothScreenState extends State<BluetoothScreen> {
   final BluetoothDeviceService _bluetoothService = BluetoothDeviceService();
   final UserService _userService = UserService();
-  List<ScanResult> _foundDevices = [];
+  List<ScanResult> _scanResults = [];
   bool _isScanning = false;
   String _scanStatus = "Not scanning";
   String _connectionStatus = "Not connected";
@@ -38,6 +38,7 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
   bool _isReconnecting = false;
   int _reconnectAttempts = 0;
   static const int maxReconnectAttempts = 3;
+  bool _isAutoScanning = false;
 
   // 可调阈值
   double closeThreshold = -50;  // 非常近
@@ -51,10 +52,14 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
   DateTime? _lastUiUpdate;
   static const Duration uiUpdateInterval = Duration(milliseconds: 100);
 
+  List<Map<String, String>> _pairedDevices = [];
+
   @override
   void initState() {
     super.initState();
     _checkPermissions();
+    _loadPairedDevices();
+    _startScan();
   }
 
   @override
@@ -99,37 +104,103 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
     }
   }
 
-  void _startScan() {
+  Future<void> _loadPairedDevices() async {
+    final devices = await BluetoothManager.getPairedDevices();
+    setState(() {
+      _pairedDevices = devices;
+    });
+  }
+
+  Future<void> _startScan() async {
     if (!mounted) return;
+
+    // 检查蓝牙状态
+    try {
+      if (!await FlutterBluePlus.isAvailable) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Bluetooth is not available on this device')),
+        );
+        return;
+      }
+
+      if (!await FlutterBluePlus.isOn) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please turn on Bluetooth')),
+        );
+        return;
+      }
+    } catch (e) {
+      print('Error checking Bluetooth status: $e');
+      return;
+    }
 
     setState(() {
       _isScanning = true;
       _scanStatus = "Scanning...";
-      _foundDevices.clear();
+      if (!_isAutoScanning) {
+        _scanResults.clear();
+      }
       _showRssi = false;
     });
 
-    _bluetoothService.startScan().listen((results) {
-      if (!mounted) return;
-      setState(() {
-        // 只保留有名字的设备
-        _foundDevices = results.where((r) => 
-          r.device.platformName.isNotEmpty || 
-          r.device.localName.isNotEmpty || 
-          r.advertisementData.advName.isNotEmpty
-        ).toList();
-        _scanStatus = "Found ${_foundDevices.length} device(s)";
+    try {
+      FlutterBluePlus.scanResults.listen((results) {
+        if (!mounted) return;
+        setState(() {
+          if (_isAutoScanning) {
+            for (var result in results) {
+              if (result.device.platformName.isNotEmpty || 
+                  result.device.localName.isNotEmpty || 
+                  result.advertisementData.advName.isNotEmpty) {
+                int existingIndex = _scanResults.indexWhere(
+                  (d) => d.device.remoteId == result.device.remoteId
+                );
+                if (existingIndex != -1) {
+                  _scanResults[existingIndex] = result;
+                } else {
+                  _scanResults.add(result);
+                }
+              }
+            }
+          } else {
+            _scanResults = results.where((r) => 
+              r.device.platformName.isNotEmpty || 
+              r.device.localName.isNotEmpty || 
+              r.advertisementData.advName.isNotEmpty
+            ).toList();
+          }
+          _scanStatus = "Found ${_scanResults.length} device(s)";
+        });
       });
-    });
 
-    _scanTimer = Timer(const Duration(seconds: 10), () {
-      if (!mounted) return;
+      await FlutterBluePlus.startScan(timeout: const Duration(seconds: 4));
+    } catch (e) {
+      print('Error starting scan: $e');
+      if (mounted) {
+        setState(() {
+          _isScanning = false;
+          _scanStatus = "Scan failed: $e";
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to start scan: $e')),
+        );
+      }
+    }
+
     setState(() {
       _isScanning = false;
-        _scanStatus = "Scan completed";
-        _showRssi = true;
-      });
-      _bluetoothService.stopScan();
+      _scanStatus = "Scan completed";
+      _showRssi = true;
+    });
+  }
+
+  void _startAutoScan() {
+    _isAutoScanning = true;
+    BluetoothManager.startMonitoring();
+    Timer.periodic(Duration(seconds: 15), (timer) {
+      if (mounted && _connectedDeviceName == null) {  // 只在未连接设备时进行扫描
+        _startScan();
+      }
     });
   }
 
@@ -142,33 +213,66 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
       }
       
       try {
-        // 检查设备是否仍然连接
-        if (!device.isConnected) {
+        // 检查设备连接状态
+        bool isConnected = await device.isConnected;
+        if (!isConnected) {
           print("Device disconnected, attempting to reconnect...");
-          await _bluetoothService.connectToDevice(device);
+          try {
+            await _bluetoothService.connectToDevice(device);
+            await Future.delayed(const Duration(milliseconds: 500));
+            isConnected = await device.isConnected;
+            if (!isConnected) {
+              throw Exception("Failed to reconnect");
+            }
+          } catch (e) {
+            print("Reconnection failed: $e");
+            timer.cancel();
+            if (mounted) {
+              setState(() {
+                _connectionStatus = "Disconnected";
+                _connectedDeviceName = null;
+                _rssiValue = null;
+              });
+              _isAutoScanning = true;
+            }
+            return;
+          }
         }
         
-        int rssi = await device.readRssi();
+        // 读取RSSI值，设置5秒超时
+        int rssi = await device.readRssi().timeout(
+          const Duration(seconds: 5),
+          onTimeout: () {
+            print("RSSI read timed out, retrying...");
+            throw TimeoutException("RSSI read timed out");
+          },
+        );
+        
         if (!mounted) return;
         
         setState(() {
           _rssiValue = rssi.toDouble();
+          _lastRssiUpdate = DateTime.now();
         });
         
-        // 只有在RSSI值有效时才更新震动
         if (_rssiValue != null && _rssiValue! > rssiMin) {
           _startVibrationFeedback(_rssiValue!);
         }
-        
       } catch (e) {
-        print("Error reading RSSI: $e");
-        _vibrationTimer?.cancel();  // 停止震动
-        
-        // 如果发生错误，尝试重新连接
-        try {
-          await _bluetoothService.connectToDevice(device);
-        } catch (reconnectError) {
-          print("Reconnection failed: $reconnectError");
+        if (e is TimeoutException) {
+          print("RSSI read timed out, will retry on next interval");
+        } else {
+          print("Error reading RSSI: $e");
+          _vibrationTimer?.cancel();
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error reading RSSI: ${e.toString()}'),
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
         }
       }
     });
@@ -206,32 +310,102 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
     }
   }
 
-  Future<void> _connectToDevice(ScanResult result) async {
+  Future<void> _connectToDevice(BluetoothDevice device) async {
     if (!mounted) return;
     
     setState(() {
       _connectionStatus = "Connecting...";
     });
 
+    // 停止自动扫描
+    _isAutoScanning = false;
+    _bluetoothService.stopScan();
+
     try {
-      await _bluetoothService.connectToDevice(result.device);
+      // 先检查是否已连接
+      if (await device.isConnected) {
+        print("Device is already connected");
+        setState(() {
+          _connectionStatus = "Connected";
+          _connectedDeviceName = device.name;
+          _rssiValue = _scanResults.firstWhere((r) => r.device.remoteId == device.remoteId).rssi.toDouble();
+        });
+        _startRssiMonitoring(device);
+        return;
+      }
+
+      // 尝试连接
+      bool connected = await _bluetoothService.connectToDevice(device);
+      if (!connected) {
+        throw Exception("Failed to connect to device");
+      }
+
+      // 等待连接稳定
+      await Future.delayed(const Duration(seconds: 2));
+      
+      // 验证连接状态
+      bool isConnected = await device.isConnected;
+      if (!isConnected) {
+        throw Exception("Connection verification failed");
+      }
       
       if (!mounted) return;
+
+      // 更新UI状态
       setState(() {
         _connectionStatus = "Connected";
-        _connectedDeviceName = result.device.name;
-        _rssiValue = result.rssi.toDouble();
+        _connectedDeviceName = device.name;
+        _rssiValue = _scanResults.firstWhere((r) => r.device.remoteId == device.remoteId).rssi.toDouble();
       });
 
-      _startRssiMonitoring(result.device);
-      _startVibrationFeedback(result.rssi.toDouble());
+      // 启动RSSI监控和震动反馈
+      _startRssiMonitoring(device);
+      if (_rssiValue != null) {
+        _startVibrationFeedback(_rssiValue!);
+      }
+
+      // 保存配对设备
+      await BluetoothManager.savePairedDevice(device.id.id, device.name);
+      await _loadPairedDevices();
       
     } catch (e) {
+      print("Connection error: $e");
       if (!mounted) return;
+      
       setState(() {
         _connectionStatus = "Connection failed: $e";
+        _connectedDeviceName = null;
       });
+      
       _vibrationTimer?.cancel();
+      _isAutoScanning = true;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to connect: ${e.toString()}'),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  Future<void> _disconnectDevice(BluetoothDevice device) async {
+    try {
+      await device.disconnect();
+      await BluetoothManager.removePairedDevice(device.id.id);
+      await _loadPairedDevices();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Disconnected from ${device.name}')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to disconnect: ${e.toString()}')),
+        );
+      }
     }
   }
 
@@ -263,47 +437,16 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
     }
   }
 
-  Widget _buildDeviceList() {
-    if (_foundDevices.isEmpty) {
-      return Center(
-        child: Text(_isScanning ? "Scanning..." : "No devices found"),
-      );
-    }
-
-    return ListView.builder(
-      shrinkWrap: true,
-      itemCount: _foundDevices.length,
-      itemBuilder: (context, index) {
-        final device = _foundDevices[index];
-        final deviceName = _getDeviceName(device);
-        
-        return Card(
-          margin: const EdgeInsets.symmetric(vertical: 4),
-          child: ListTile(
-            title: Text(deviceName),
-            subtitle: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-                Text("MAC: ${device.device.remoteId}"),
-                if (_showRssi) Text("RSSI: ${device.rssi} dBm"),
-              ],
-            ),
-            trailing: ElevatedButton(
-              onPressed: _isScanning ? null : () => _connectToDevice(device),
-              child: const Text("Connect"),
-          ),
-          ),
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bluetooth'),
+        title: const Text('Bluetooth Devices'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _startScan,
+          ),
           IconButton(
             icon: const Icon(Icons.qr_code_scanner),
             onPressed: () {
@@ -312,52 +455,78 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
                 MaterialPageRoute(builder: (context) => const QRScreen()),
               );
             },
-        ),
+          ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-            Text("Status: $_scanStatus"),
-            const SizedBox(height: 8),
-            Text("Connection: $_connectionStatus"),
-            if (_connectedDeviceName != null) ...[
-              const SizedBox(height: 8),
-              Text("Connected to: $_connectedDeviceName"),
+      body: RefreshIndicator(
+        onRefresh: _startScan,
+        child: ListView(
+          children: [
+            if (_pairedDevices.isNotEmpty) ...[
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text(
+                  'Paired Devices',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              ..._pairedDevices.map((device) => ListTile(
+                title: Text(device['name'] ?? 'Unknown Device'),
+                subtitle: Text(device['id'] ?? ''),
+                trailing: TextButton(
+                  child: const Text('Disconnect'),
+                  onPressed: () async {
+                    final scanResult = _scanResults.firstWhere(
+                      (result) => result.device.id.id == device['id'],
+                      orElse: () => _scanResults.first,
+                    );
+                    await _disconnectDevice(scanResult.device);
+                  },
+                ),
+              )).toList(),
+              const Divider(),
             ],
-            if (_rssiValue != null) ...[
-              const SizedBox(height: 8),
-              Text("Signal Strength: ${_rssiValue!.toStringAsFixed(1)} dBm"),
-              const SizedBox(height: 4),
-              Text("Distance: ${_getDistanceCategory(_rssiValue!)}"),
-              const SizedBox(height: 8),
-              LinearProgressIndicator(
-                value: (_rssiValue! - rssiMin) / (rssiMax - rssiMin),
-                backgroundColor: Colors.grey[200],
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  _rssiValue! >= closeThreshold
-                      ? Colors.green
-                      : _rssiValue! >= midThreshold
-                          ? Colors.blue
-                          : _rssiValue! >= farThreshold
-                              ? Colors.orange
-                              : Colors.red,
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text(
+                'Available Devices',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
-          ),
-            ],
-            const SizedBox(height: 16),
-          ElevatedButton(
-              onPressed: _isScanning ? null : _startScan,
-              child: Text(_isScanning ? "Scanning..." : "Scan"),
-          ),
-            const SizedBox(height: 16),
-          Expanded(
-              child: _buildDeviceList(),
-            ),
+            if (_isScanning)
+              const Center(child: CircularProgressIndicator())
+            else
+              ..._scanResults.map(
+                (result) => ListTile(
+                  title: Text(_getDeviceName(result)),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(result.device.id.id),
+                      if (result.rssi != 0)
+                        Text(
+                          'RSSI: ${result.rssi} dBm (${_getDistanceCategory(result.rssi.toDouble())})',
+                          style: TextStyle(
+                            color: result.rssi > -70 ? Colors.green : 
+                                   result.rssi > -90 ? Colors.orange : Colors.red,
+                          ),
+                        ),
+                    ],
+                  ),
+                  trailing: TextButton(
+                    child: const Text('Connect'),
+                    onPressed: () => _connectToDevice(result.device),
+                  ),
+                ),
+              ),
           ],
-          ),
+        ),
       ),
     );
   }
