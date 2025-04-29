@@ -382,3 +382,82 @@ flutter run
 ## 许可证
 
 本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件 
+
+A revolutionary Bluetooth-based proximity detection and navigation application that helps users maintain optimal social distancing while staying connected.
+
+## Core Concept
+The Good Friend Medallion app uses Bluetooth Low Energy (BLE) technology to create a virtual "social bubble" around users, helping them maintain appropriate physical distances in social settings.
+
+## Key Design Features
+- Real-time distance monitoring using BLE RSSI
+- Visual and haptic feedback for distance awareness
+- Directional guidance using compass integration
+- Social distance alerts and notifications
+- API-enhanced location tracking and synchronization
+
+## How It Works
+1. Users pair their devices via Bluetooth
+2. The app continuously monitors signal strength (RSSI)
+3. Distance is calculated and displayed in real-time
+4. Visual and haptic feedback is provided based on proximity
+5. API integration enhances location accuracy and tracking
+
+## Technical Implementation
+- BLE GATT profile for device communication
+- RSSI-based distance estimation
+- Compass integration for directional guidance
+- API integration for enhanced functionality
+- Real-time data synchronization
+
+## Installation
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Run the development server: `npm start`
+4. Build for production: `npm run build`
+
+## Project Evolution
+- Initial release: Basic BLE connectivity
+- Version 1.1: Added RSSI monitoring
+- Version 1.2: Implemented compass integration
+- Version 1.3: Enhanced with API support
+- Current version: Optimized performance and stability
+
+## Latest Update (April 28, 2024)
+### BLE Connection and RSSI Enhancements
+- Improved RSSI signal strength display
+- Enhanced connection stability
+- Optimized distance calculation
+- Added API integration for better accuracy
+
+### Device List Display Improvements
+- Color-coded signal strength indicators
+- Distance category display
+- Enhanced connection status feedback
+
+### Connection Logic
+- More reliable device pairing
+- Improved error handling
+- Better reconnection mechanism
+
+### RSSI Monitoring
+- Optimized reading frequency
+- Enhanced stability
+- Better timeout handling
+
+### API Integration
+- Enhanced compass functionality
+- Improved location tracking
+- Real-time data synchronization
+- Better device management
+
+## Future Roadmap
+- Enhanced API features
+- Improved accuracy algorithms
+- Additional social features
+- Cross-platform compatibility
+
+## Contributing
+We welcome contributions! Please read our [Contributing Guidelines](CONTRIBUTING.md) for details.
+
+## License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. 

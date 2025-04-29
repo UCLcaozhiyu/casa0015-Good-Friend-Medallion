@@ -10,7 +10,7 @@
   - Orange: Medium signal (-90 to -70 dBm)
   - Red: Weak signal (< -90 dBm)
 
-![Device List with RSSI Display](assets/updates/2024-04-28/device_list.png)
+
 *Screenshot: Enhanced device list showing RSSI values and distance categories*
 
 ### 2. Bluetooth Connection Logic Improvements
@@ -19,7 +19,7 @@
 - Implemented more stable reconnection mechanism
 - Enhanced error handling and user feedback
 
-![Connection Status](assets/updates/2024-04-28/connection_status.png)
+![Connection Status](landingpage/assets/gfm3.5/BLEimprove.png)
 *Screenshot: Improved connection status display and error handling*
 
 ### 3. RSSI Monitoring Optimization
@@ -28,7 +28,7 @@
 - Optimized RSSI update frequency and stability
 - Improved reconnection logic during disconnection
 
-![RSSI Monitoring](assets/updates/2024-04-28/rssi_monitoring.png)
+![RSSI Monitoring](landingpage/assets/gfm3.5/rssi_monitoring.png)
 *Screenshot: Real-time RSSI monitoring and distance feedback*
 
 ### 4. Performance Optimization
@@ -37,28 +37,28 @@
 - Enhanced device state management
 
 ### 5. Technical Diagrams
-![Connection Flow](assets/updates/2024-04-28/connection_flow.png)
+![Connection Flow](landingpage/assets/gfm3.5/connection_flow.png)
 *Diagram: Updated Bluetooth connection workflow*
 
-![RSSI Processing](assets/updates/2024-04-28/rssi_processing.png)
+![RSSI Processing](landingpage/assets/gfm3.5/rssi_processing.png)
 *Diagram: RSSI signal processing and feedback system*
 
-### 6. Known Issues
+### 6. API Integration
+- Implemented API for enhanced compass functionality
+- Added real-time data synchronization
+- Improved location accuracy with API support
+- Enhanced device tracking capabilities
+
+![Compass with API](landingpage/assets/gfm3.5/compass_api.png)
+*Screenshot: Enhanced compass functionality with API integration*
+
+### 7. Known Issues
 - Some devices may require multiple attempts to establish a stable connection
 - RSSI readings may occasionally timeout, but the system will automatically retry
 
-### 7. Testing Results
-![Performance Test](assets/updates/2024-04-28/performance_test.png)
+### 8. Testing Results
+![Performance Test](landingpage/assets/gfm3.5/performance_test.png)
 *Graph: Connection stability and RSSI reading performance test results*
 
 ---
-Note: To add the actual screenshots and diagrams:
-1. Create an `assets/updates/2024-04-28/` directory
-2. Save your screenshots with the following names:
-   - device_list.png
-   - connection_status.png
-   - rssi_monitoring.png
-   - connection_flow.png
-   - rssi_processing.png
-   - performance_test.png
-3. Replace the placeholder paths with your actual image paths 
+Note: All screenshots and diagrams are located in the `landingpage/assets/gfm3.5/` directory. 
