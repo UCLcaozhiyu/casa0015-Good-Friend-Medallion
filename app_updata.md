@@ -310,6 +310,39 @@ String _getDeviceName(ScanResult result) {
 
 (Step 11 and beyond to be continued based on actual development progress)
 
+# Application Update Log
+
+## April 28, 2024 - Bluetooth Functionality Optimization
+
+### 1. Device List Display Enhancement
+- Restored and improved RSSI signal strength display
+- Added distance category indicators (Very Close/Near/Moderate/Far)
+- Implemented color-coded signal strength:
+  - Green: Strong signal (> -70 dBm)
+  - Orange: Medium signal (-90 to -70 dBm)
+  - Red: Weak signal (< -90 dBm)
+
+
+
+### 2. Bluetooth Connection Logic Improvements
+- Optimized device connection workflow
+- Added connection state verification
+- Implemented more stable reconnection mechanism
+- Enhanced error handling and user feedback
+
+
+
+### 3. API Integration
+
+
+### 4. Known Issues
+- Some devices may require multiple attempts to establish a stable connection
+- RSSI readings may occasionally timeout, but the system will automatically retry
+
+### 8. Testing
+
+---
+Note: All screenshots and diagrams are located in the `landingpage/assets/gfm3.5/` directory. 
 
 # 🖼️ Sneak Peek of Current App
 
