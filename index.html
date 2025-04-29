@@ -187,6 +187,67 @@
             </div>
         </div>
 
+        <!-- Version 3.5 -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <h3>Version 3.5 - April 2024 Update</h3>
+                <p class="lead">Enhanced Bluetooth Connectivity and RSSI Monitoring</p>
+                <ul class="mb-4">
+                    <li>Improved RSSI signal strength visualization with color coding</li>
+                    <li>Enhanced connection stability with automatic retry mechanism (not working)</li>
+                    <li>OpenWeatherMap API Integration</li>
+                    <li>Advanced RSSI monitoring with timeout handling</li>
+                </ul>
+
+                <!-- Demo Video -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="ratio ratio-16x9">
+                            <video controls>
+                                <source src="assets/gfm3.5/demo.mp4" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                        </div>
+                        <p class="text-center mt-2 text-muted">Version 3.5 Demo: Enhanced BLE Features and Compass Weather API Integration</p>
+                    </div>
+                </div>
+                
+                <!-- Technical Improvements -->
+                <div class="row g-4 mb-4">
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <img src="assets/gfm3.5/BLEimprove.jpg" class="card-img-top" alt="Enhanced BLE Features">
+                            <div class="card-body">
+                                <h5 class="card-title">Enhanced BLE Features</h5>
+                                <p class="card-text">Color-coded RSSI values and improved connection stability</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <img src="assets/gfm3.5/campass_with_API.jpg" class="card-img-top" alt="Compass with API">
+                            <div class="card-body">
+                                <h5 class="card-title">Compass Integration</h5>
+                                <p class="card-text">Enhanced compass functionality with API integration</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Code Snippet -->
+                <div class="mt-4">
+                    <h5>RSSI Visualization Code</h5>
+                    <pre class="bg-light p-3 rounded"><code>Text(
+  'RSSI: ${result.rssi} dBm (${_getDistanceCategory(result.rssi.toDouble())})',
+  style: TextStyle(
+    color: result.rssi > -70 ? Colors.green : 
+           result.rssi > -90 ? Colors.orange : Colors.red,
+  ),
+)</code></pre>
+                </div>
+            </div>
+        </div>
+
         <div class="row">
             <div class="col-12 text-center">
                 <p class="lead">"The path will be dangerous, but your medallion will guide you." 🐺</p>
@@ -200,7 +261,7 @@
             <div class="col-md-8 mx-auto">
                 <div class="ratio ratio-16x9">
                     <video controls>
-                        <source src="assets/gfm3.0/demo2.mp4" type="video/mp4">
+                        <source src="assets/gfm3.0/fc76565dc6363de0a73005647fa99513.mp4" type="video/mp4">
                         Your browser does not support the video tag.
                     </video>
                 </div>
