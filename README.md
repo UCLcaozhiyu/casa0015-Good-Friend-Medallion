@@ -315,7 +315,7 @@ Developed by: Zhiyu Cao
 - Color-coded signal strength indicators
 - Distance category display
 - Enhanced connection status feedback
-![Location Tracking](landingpage/assets/gfm3.5/campass_with_API.jpg)
+![Location Tracking](landingpage/assets/gfm3.5/BLEimprove.jpg)
 
 ### Connection Logic
 - More reliable device pairing
@@ -329,4 +329,4 @@ Developed by: Zhiyu Cao
 ### API Integration
 - Enhanced compass functionality
 - Real-time Weather data synchronization (by OpenWeatherMap)
-![Location Tracking](landingpage/assets/gfm3.5/BLEimprove.jpg)
+![Location Tracking](landingpage/assets/gfm3.5/campass_with_API.jpg)
